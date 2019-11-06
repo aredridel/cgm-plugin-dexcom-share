@@ -44,36 +44,19 @@ const Defaults = {
   MIN_PASSPHRASE_LENGTH: 12
 };
 
-const DIRECTIONS = {
-  NONE: 0,
-  DoubleUp: 1,
-  SingleUp: 2,
-  FortyFiveUp: 3,
-  Flat: 4,
-  FortyFiveDown: 5,
-  SingleDown: 6,
-  DoubleDown: 7,
-  "NOT COMPUTABLE": 8,
-  "RATE OUT OF RANGE": 9
-};
-
-const Trends = (() => {
-  const keys = Object.keys(DIRECTIONS);
-  const trends = keys.sort(function(a, b) {
-    return DIRECTIONS[a] - DIRECTIONS[b];
-  });
-  return trends;
-})();
-
-function directionToTrend(direction) {
-  if (direction in DIRECTIONS) {
-    return DIRECTIONS[direction];
-  } else {
-    return DIRECTIONS["NOT COMPUTABLE"];
-  }
-}
-
 function trendToDirection(trend) {
+  const Trends = [
+    "NONE",
+    "ExtremeRise",
+    "FastRise",
+    "Rise",
+    "Flat",
+    "Fall",
+    "FastFall",
+    "ExtremeFall",
+    "NOT COMPUTABLE",
+    "RATE OUT OF RANGE"
+  ];
   return Trends[trend] || Trends[0];
 }
 
@@ -167,17 +150,16 @@ function dex_to_entry(d) {
     Value: 101,
     WT: '/Date(1426292039000)/' } ]
 */
-  var regex = /\((.*)\)/;
-  var wall = parseInt(d.WT.match(regex)[1]);
-  var entry = {
-    sgv: d.Value,
-    ts: wall,
-    trend: d.Trend,
-    direction: trendToDirection(d.Trend),
-    device: "share2",
-    type: "sgv"
+  const extractTimestamp = /\(([0-9]*)\)/;
+  const wall = Number(d.WT.match(extractTimestamp)[1]);
+  return {
+    type: "sgv", content: {
+      sgv: d.Value,
+      ts: wall,
+      direction: trendToDirection(d.Trend),
+      device: "share2",
+    }
   };
-  return entry;
 }
 
 function engine(opts) {
