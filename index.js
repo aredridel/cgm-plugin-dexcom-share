@@ -45,8 +45,6 @@ var Defaults = {
 , 'content-type': 'application/json'
 , LatestGlucose: 'https://' + server + '/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues'
 // ?sessionID=e59c836f-5aeb-4b95-afa2-39cf2769fede&minutes=1440&maxCount=1"
-, nightscout_upload: '/api/v1/entries.json'
-, nightscout_battery: '/api/v1/devicestatus.json'
 , MIN_PASSPHRASE_LENGTH: 12
 };
 
@@ -170,33 +168,6 @@ function dex_to_entry (d) {
   return entry;
 }
 
-// Record data into Nightscout.
-function report_to_nightscout (opts, then) {
-  var shasum = crypto.createHash('sha1');
-  var hash = shasum.update(opts.API_SECRET);
-  var headers = { 'api-secret': shasum.digest('hex')
-                , 'Content-Type': Defaults['content-type']
-                , 'Accept': Defaults.accept };
-  var url = opts.endpoint + Defaults.nightscout_upload;
-  var req = { uri: url, body: opts.entries, json: true, headers: headers, method: 'POST'
-            , rejectUnauthorized: false };
-  return request(req, then);
-
-}
-
-function nullify_battery_status (opts, then) {
-  var shasum = crypto.createHash('sha1');
-  var hash = shasum.update(opts.API_SECRET);
-  var headers = { 'api-secret': shasum.digest('hex')
-                , 'Content-Type': Defaults['content-type']
-                , 'Accept': Defaults.accept };
-  var url = opts.endpoint + Defaults.nightscout_battery;
-  var body = { uploaderBattery: false };
-  var req = { uri: url, body: body, json: true, headers: headers, method: 'POST'
-            , rejectUnauthorized: false };
-  return request(req, then);
-}
-
 function engine (opts) {
 
   var runs = 0;
@@ -236,39 +207,18 @@ function engine (opts) {
         var responseStatus = res ? res.statusCode : "response not found";
         console.log("Error refreshing token", err, responseStatus, body);
         if (failures >= opts.maxFailures) {
-          throw "Too many login failures, check DEXCOM_ACCOUNT_NAME and DEXCOM_PASSWORD";
+          throw "Too many login failures, check BRIDGE_USER_NAME and BRIDGE_PASSWORD";
         }
       }
     });
   }
 
   function to_nightscout (glucose) {
-    var ns_config = Object.create(opts.nightscout);
     if (glucose) {
       runs++;
       // Translate to Nightscout data.
       var entries = glucose.map(dex_to_entry);
-      console.log('Entries', entries);
-      if (opts && opts.callback && opts.callback.call) {
-        opts.callback(null, entries);
-      }
-      if (ns_config.endpoint) {
-        if (runs === 0) {
-          nullify_battery_status(ns_config, function (err, resp) {
-            if (err) {
-              console.warn('Problem reporting battery', arguments);
-            } else {
-              console.log('Battery status hidden');
-            }
-          });
-        }
-        ns_config.entries = entries;
-        // Send data to Nightscout.
-        report_to_nightscout(ns_config, function (err, response, body) {
-          console.log("Nightscout upload", 'error', err, 'status', response.statusCode, body);
-
-        });
-      }
+      log_entries(entries);
     }
   }
 
@@ -294,16 +244,9 @@ function readENV(varName, defaultValue) {
 
 // If run from commandline, run the whole program.
 if (!module.parent) {
-  if (readENV('API_SECRET').length < Defaults.MIN_PASSPHRASE_LENGTH) {
-    var msg = [ "API_SECRET environment variable should be at least"
-              , Defaults.MIN_PASSPHRASE_LENGTH, "characters" ];
-    var err = new Error(msg.join(' '));
-    throw err;
-    process.exit(1);
-  }
-  if (readENV('DEXCOM_ACCOUNT_NAME', '@').match(/\@/)) {
+  if (readENV('BRIDGE_USER_NAME', '@').match(/\@/)) {
     var msg = [ "environment variable"
-              , "DEXCOM_ACCOUNT_NAME should be"
+              , "BRIDGE_USER_NAME should be"
               , "Dexcom Share user name, not an email address"];
     var err = new Error(msg.join(' '));
     throw err;
@@ -311,12 +254,8 @@ if (!module.parent) {
   }
   var args = process.argv.slice(2);
   var config = {
-    accountName: readENV('DEXCOM_ACCOUNT_NAME')
-  , password: readENV('DEXCOM_PASSWORD')
-  };
-  var ns_config = {
-    API_SECRET: readENV('API_SECRET')
-  , endpoint: readENV('NS', 'https://' + readENV('WEBSITE_HOSTNAME'))
+    accountName: readENV('BRIDGE_USER_NAME')
+  , password: readENV('BRIDGE_PASSWORD')
   };
   var interval = readENV('SHARE_INTERVAL', 60000 * 2.5);
   interval = Math.max(60000, interval);
@@ -326,7 +265,6 @@ if (!module.parent) {
   var meta = {
     login: config
   , fetch: fetch_config
-  , nightscout: ns_config
   , maxFailures: readENV('maxFailures', 3)
   , firstFetchCount: readENV('firstFetchCount', 3)
   };
@@ -348,15 +286,7 @@ if (!module.parent) {
         if (glucose) {
           // Translate to Nightscout data.
           var entries = glucose.map(dex_to_entry);
-          console.log('Entries', entries);
-          if (ns_config.endpoint) {
-            ns_config.entries = entries;
-            // Send data to Nightscout.
-            report_to_nightscout(ns_config, function (err, response, body) {
-              console.log("Nightscout upload", 'error', err, 'status', response.statusCode, body);
-
-            });
-          }
+          log_entries(entries);
         }
       });
       break;
@@ -367,3 +297,12 @@ if (!module.parent) {
   }
 }
 
+function log_entries(entries) {
+  for (const entry of entries) {
+    if (global.postMessage) {
+      global.postMessage(entry) 
+    } else {
+      console.log(JSON.stringify(entry))
+    }
+  }
+}

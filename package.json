@@ -1,30 +1,37 @@
 {
-  "name": "share2nightscout-bridge",
-  "version": "0.2.1",
-  "description": "Fetches data from Dexcom's webservice and puts it in Nightscout.",
+  "name": "@aredridel/cgm-plugin-dexcom-share",
+  "version": "1.0.0",
+  "description": "Fetches data from Dexcom's webservice and emits it as posted messages",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Ben West",
+  "author": "Ben West & Aria Stewart",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "request": "^2.88.0"
+    "node-fetch": "^2.6.0"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/nightscout/share2nightscout-bridge.git"
+    "url": "git://github.com/aredridel/cgm-plugin-dexcom-share.git"
   },
   "engines": {
-    "node": "10.x || 8.x"
+    "node": "10.x || 12.x"
   },
   "keywords": [
     "dexcom",
     "bridge",
-    "nightscout",
     "cgm"
   ],
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 2018,
+      "sourceType": "module"
+    }
+  },
   "bugs": {
-    "url": "https://github.com/nightscout/share2nightscout-bridge/issues"
+    "url": "https://github.com/aredridel/cgm-plugin-dexcom-share/issues"
+  },
+  "homepage": "https://github.com/aredridel/cgm-plugin-dexcom-share#readme",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
