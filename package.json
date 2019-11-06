@@ -1,6 +1,6 @@
 {
   "name": "@aredridel/cgm-plugin-dexcom-share",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Fetches data from Dexcom's webservice and emits it as posted messages",
   "main": "index.js",
   "author": "Ben West & Aria Stewart",
