@@ -30,8 +30,10 @@
     "url": "https://github.com/aredridel/cgm-plugin-dexcom-share/issues"
   },
   "homepage": "https://github.com/aredridel/cgm-plugin-dexcom-share#readme",
-  "devDependencies": {},
+  "devDependencies": {
+    "@aredridel/t6": "^6.0.5"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "t6 test/*.js"
   }
 }
