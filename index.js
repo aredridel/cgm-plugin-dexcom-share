@@ -104,7 +104,7 @@ function fetch_query(opts) {
   const q = {
     sessionID: opts.sessionID,
     minutes: opts.minutes || 1440,
-    maxCount: opts.maxCount || 1
+    maxCount: opts.maxCount || 1000
   };
   return `${Defaults.LatestGlucose}?${qs.stringify(q)}`;
 }
@@ -235,13 +235,8 @@ const config = {
 };
 
 const interval = Math.max(60000, getenv("SHARE_INTERVAL", 60000 * 2.5));
-const fetch_config = {
-  maxCount: getenv("maxCount", 1),
-  minutes: getenv("minutes", 1440)
-};
 const meta = {
   login: config,
-  fetch: fetch_config,
   maxFailures: getenv("maxFailures", 3),
   firstFetchCount: getenv("firstFetchCount", 3)
 };
