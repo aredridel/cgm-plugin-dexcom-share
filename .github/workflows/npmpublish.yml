@@ -40,6 +40,8 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: '@aredridel'
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.PERSONAL_GITHUB_TOKEN}}
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.PERSONAL_GITHUB_TOKEN}}
